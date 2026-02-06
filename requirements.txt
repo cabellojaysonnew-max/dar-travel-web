@@ -1,0 +1,7 @@
+streamlit
+supabase
+pandas
+bcrypt
+fpdf
+qrcode
+tkcalendar
