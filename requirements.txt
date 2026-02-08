@@ -1,7 +1,6 @@
 streamlit
-supabase
 pandas
+supabase
 bcrypt
 fpdf
 qrcode
-tkcalendar
