@@ -74,12 +74,14 @@
             display: flex;
             gap: 1.5rem;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .form-group {
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-width: 250px;
         }
 
         label { font-weight: bold; margin-bottom: 0.5rem; font-size: 0.9rem; }
@@ -133,6 +135,7 @@
             font-weight: bold;
             background: #f1c40f;
             color: #000;
+            display: inline-block;
         }
     </style>
 </head>
@@ -191,24 +194,26 @@
                 </div>
 
                 <h4>Itinerary Builder</h4>
-                <table id="itineraryTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Destination</th>
-                            <th>Purpose</th>
-                            <th style="width: 50px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="itineraryBody">
-                        <tr>
-                            <td><input type="date" class="itin-date" required></td>
-                            <td><input type="text" placeholder="Location..." required></td>
-                            <td><input type="text" placeholder="Purpose..." required></td>
-                            <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table id="itineraryTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Destination</th>
+                                <th>Purpose</th>
+                                <th style="width: 50px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itineraryBody">
+                            <tr>
+                                <td><input type="date" class="itin-date" required></td>
+                                <td><input type="text" placeholder="Location..." required></td>
+                                <td><input type="text" placeholder="Purpose..." required></td>
+                                <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <button type="button" class="btn btn-primary" onclick="addRow()" style="margin-top: 10px; font-size: 0.8rem;">+ Add Row</button>
 
                 <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #ccc;">
@@ -218,18 +223,20 @@
 
         <div id="status-to-view" class="view">
             <h3>My Travel Orders & PSOs</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID / Type</th>
-                        <th>Dates</th>
-                        <th>Routing Status</th>
-                        <th>System Notes / Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="statusBody">
-                    </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID / Type</th>
+                            <th>Dates</th>
+                            <th>Routing Status</th>
+                            <th>System Notes / Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statusBody">
+                        </tbody>
+                </table>
+            </div>
         </div>
 
         <div id="password-view" class="view">
@@ -323,7 +330,6 @@
 
             let routing = "";
             let notes = [];
-            let proceed = true;
 
             // 1. CHECK CONFLICTS WITH EXISTING APPLICATIONS
             for (let i = 0; i < applications.length; i++) {
@@ -401,6 +407,11 @@
             const tbody = document.getElementById('statusBody');
             tbody.innerHTML = '';
             
+            if (applications.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No records found.</td></tr>`;
+                 return;
+            }
+
             applications.forEach(app => {
                 let dateDisplay = app.start === app.end ? app.start : `${app.start} to ${app.end}`;
                 tbody.innerHTML += `
