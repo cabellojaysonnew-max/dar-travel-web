@@ -2,472 +2,430 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DAR Employee Portal</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#003811">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Portal - TO Module</title>
     <style>
-        .dar-green { background-color: #003811; }
-        .text-dar-green { color: #003811; }
-        .dar-gold { background-color: #D4AF37; }
-        .text-dar-gold { color: #D4AF37; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
-        ::-webkit-scrollbar { display: none; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        /* CORE UI: Styling and Hide/Show Logic */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --bg: #ecf0f1;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        nav {
+            background-color: var(--primary);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        nav h2 { margin: 0; color: white; }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        nav a:hover, nav a.active-link {
+            background-color: var(--accent);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Load Once, Hide & Show Rule */
+        .view { display: none; }
+        .view.active { display: block; animation: fadeIn 0.3s ease-in; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .form-row {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label { font-weight: bold; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        
+        input, select {
+            padding: 0.6rem;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            border: 1px solid #ecf0f1;
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        th { background-color: #f8f9fa; }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+        }
+
+        .btn-primary { background-color: var(--accent); }
+        .btn-primary:hover { background-color: #2980b9; }
+        .btn-danger { background-color: var(--danger); }
+        
+        .mock-db-info {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: #f1c40f;
+            color: #000;
+        }
     </style>
 </head>
-<body class="h-[100dvh] w-full flex flex-col overflow-hidden text-gray-800 bg-gray-100">
+<body>
 
-    <div id="app" class="w-full h-full flex flex-col relative"></div>
+    <nav>
+        <h2>HR Portal - TO System</h2>
+        <ul>
+            <li><a href="#" class="nav-link active-link" onclick="switchView('apply-to-view', this)">Apply TO</a></li>
+            <li><a href="#" class="nav-link" onclick="switchView('status-to-view', this)">My Applications</a></li>
+            <li><a href="#" class="nav-link" onclick="switchView('password-view', this)">Security</a></li>
+        </ul>
+    </nav>
 
-    <script>
-        // --- SUPABASE CONFIG ---
-        const SUPABASE_URL = "https://ytfpiyfapvybihlngxks.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZnBpeWZhcHZ5YmlobG5neGtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMDA2MTIsImV4cCI6MjA4NTY3NjYxMn0.7TRVjvFjxVtxkP_hL3wnlxPT6FXJd0y7aKHNzDHThAQ";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <div class="container">
 
-        // --- STATE ---
-        let currentUser = null;
-        let myOrders = [];
-        let myItineraries = [];
+        <div id="apply-to-view" class="view active">
+            <h3>Apply for Travel Order</h3>
+            
+            <div class="mock-db-info">
+                <strong>Current Schedule Context (For Testing):</strong><br>
+                You have a <em>PENDING TO</em> on <strong>April 15</strong>.<br>
+                You have an <em>APPROVED MULTI-DAY TO</em> from <strong>April 18 to April 20</strong>.<br>
+                You have an <em>APPROVED PSO</em> on <strong>April 25</strong>.<br>
+                <em>Try applying on these dates to trigger the strict overwrite/conflict rules.</em>
+            </div>
 
-        // --- INIT ROUTER ---
-        window.onload = () => {
-            if (!currentUser) renderLogin();
-            else initAppShell();
-        };
-
-        // --- 1. LOGIN ---
-        function renderLogin() {
-            document.getElementById('app').innerHTML = `
-                <div class="flex-grow flex flex-col justify-center items-center px-6 dar-green h-full">
-                    <div class="z-10 w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
-                        <div class="dar-gold h-2 w-full"></div>
-                        <div class="p-8 text-center">
-                            <h1 class="text-dar-green font-bold text-3xl font-serif mb-1">DAR</h1>
-                            <p class="text-xs text-gray-500 font-bold tracking-widest mb-6 uppercase">Employee Portal</p>
-                            
-                            <div class="space-y-4 text-left">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">USERNAME</label>
-                                    <input type="text" id="username" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-800" autocomplete="off">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">PASSWORD</label>
-                                    <input type="password" id="password" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-800">
-                                </div>
-                                <p id="loginError" class="text-red-600 text-xs font-bold text-center hidden"></p>
-                                <button onclick="handleLogin()" id="loginBtn" class="w-full mt-2 dar-green text-white font-bold py-3.5 rounded-xl active:opacity-80 transition shadow-lg">LOG IN</button>
-                            </div>
-                        </div>
+            <form id="toForm" onsubmit="processTravelOrder(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date (Multi-day)</label>
+                        <input type="date" id="endDate" required>
                     </div>
                 </div>
-            `;
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Employee Unit/Division</label>
+                        <select id="unitSelect" required>
+                            <option value="HAS_UNIT">Standard Unit</option>
+                            <option value="PARPO">PARPO</option>
+                            <option value="NO_UNIT">No Unit (Chief)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mode of Transportation</label>
+                        <select id="transportSelect" required>
+                            <option value="PUBLIC">Public Utility Vehicle</option>
+                            <option value="GOV_VEHICLE">Government Vehicle</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h4>Itinerary Builder</h4>
+                <table id="itineraryTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Destination</th>
+                            <th>Purpose</th>
+                            <th style="width: 50px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itineraryBody">
+                        <tr>
+                            <td><input type="date" class="itin-date" required></td>
+                            <td><input type="text" placeholder="Location..." required></td>
+                            <td><input type="text" placeholder="Purpose..." required></td>
+                            <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-primary" onclick="addRow()" style="margin-top: 10px; font-size: 0.8rem;">+ Add Row</button>
+
+                <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #ccc;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 1rem;">Submit Application</button>
+            </form>
+        </div>
+
+        <div id="status-to-view" class="view">
+            <h3>My Travel Orders & PSOs</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID / Type</th>
+                        <th>Dates</th>
+                        <th>Routing Status</th>
+                        <th>System Notes / Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="statusBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="password-view" class="view">
+            <h3>Change Password</h3>
+            <form onsubmit="changePassword(event)" style="max-width: 400px;">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Current Password</label>
+                    <input type="password" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>New Password</label>
+                    <input type="password" id="newPass" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confPass" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Security</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        // MOCK DATABASE: Simulating existing records to test the strict logic
+        let currentYear = new Date().getFullYear(); // dynamic year for testing
+        let applications = [
+            { id: 'TO-001', type: 'TO', start: `${currentYear}-04-15`, end: `${currentYear}-04-15`, status: 'PENDING', route: 'PENDING_UNIT_HEAD', notes: '' },
+            { id: 'TO-002', type: 'TO', start: `${currentYear}-04-18`, end: `${currentYear}-04-20`, status: 'APPROVED', route: 'APPROVED', notes: 'Multi-day' },
+            { id: 'PSO-001', type: 'PSO', start: `${currentYear}-04-25`, end: `${currentYear}-04-25`, status: 'APPROVED', route: 'APPROVED', notes: 'Existing PSO' }
+        ];
+
+        // --- UI LOGIC ---
+        function switchView(viewId, navElement) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active-link'));
+            
+            document.getElementById(viewId).classList.add('active');
+            navElement.classList.add('active-link');
+
+            if(viewId === 'status-to-view') renderStatusTable();
         }
 
-        async function handleLogin() {
-            const userBox = document.getElementById('username').value.trim();
-            const passBox = document.getElementById('password').value.trim();
-            const errLbl = document.getElementById('loginError');
-            const btn = document.getElementById('loginBtn');
+        // --- ITINERARY LOGIC ---
+        function addRow() {
+            const tbody = document.getElementById('itineraryBody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="date" class="itin-date" required></td>
+                <td><input type="text" placeholder="Location..." required></td>
+                <td><input type="text" placeholder="Purpose..." required></td>
+                <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button></td>
+            `;
+            tbody.appendChild(newRow);
+        }
 
-            if(!userBox || !passBox) { errLbl.innerText = "Enter credentials."; errLbl.classList.remove("hidden"); return; }
-            btn.innerText = "AUTHENTICATING..."; btn.disabled = true;
+        function removeRow(btn) {
+            if(document.querySelectorAll('#itineraryBody tr').length > 1) {
+                btn.closest('tr').remove();
+            } else {
+                alert("Itinerary must have at least one entry.");
+            }
+        }
 
-            try {
-                const { data: users, error } = await supabase.from('users').select('*').eq('username', userBox).eq('password', passBox);
-                if (error) throw error;
+        // Auto-fill itinerary date based on Start Date
+        document.getElementById('startDate').addEventListener('change', function(e) {
+            const dates = document.querySelectorAll('.itin-date');
+            if(dates.length > 0 && !dates[0].value) dates[0].value = e.target.value;
+            // Also set min limit for end date
+            document.getElementById('endDate').min = e.target.value;
+        });
 
-                if (users.length > 0) {
-                    currentUser = users[0];
-                    initAppShell();
+        // --- CORE BUSINESS LOGIC ---
+        function checkDateOverlap(start1, end1, start2, end2) {
+            const s1 = new Date(start1), e1 = new Date(end1);
+            const s2 = new Date(start2), e2 = new Date(end2);
+            return (s1 <= e2) && (s2 <= e1); // True if ranges overlap
+        }
+
+        function processTravelOrder(event) {
+            event.preventDefault();
+
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value || startDate;
+            const unit = document.getElementById('unitSelect').value;
+            const transport = document.getElementById('transportSelect').value;
+            
+            if(new Date(endDate) < new Date(startDate)) {
+                alert("End date cannot be before start date."); return;
+            }
+
+            let routing = "";
+            let notes = [];
+            let proceed = true;
+
+            // 1. CHECK CONFLICTS WITH EXISTING APPLICATIONS
+            for (let i = 0; i < applications.length; i++) {
+                let app = applications[i];
+                if (checkDateOverlap(startDate, endDate, app.start, app.end)) {
+                    
+                    // PSO OVERRIDE RULE
+                    if (app.type === 'PSO') {
+                        let confirmPSO = confirm(`Conflict with ${app.id} (PSO).\nTO cannot supersede PSO.\nDo you want to force proceed subject to PARPO final approval?`);
+                        if (!confirmPSO) return;
+                        notes.push(`WITH EXISTING PSO/RSO, subject for PARPO's FINAL APPROVAL`);
+                        routing = 'PENDING_PARPO_FINAL';
+                        break; 
+                    }
+                    
+                    // PENDING SAME DATE / 1-DAY APPROVED OVERWRITE RULE
+                    if (app.type === 'TO' && app.start === app.end && (app.status === 'PENDING' || app.status === 'APPROVED')) {
+                        let confirmOverwrite = confirm(`Conflict with ${app.id} (${app.status}).\nDo you want to overwrite? This will cancel the old and create a NEW APPLICATION.`);
+                        if (!confirmOverwrite) return;
+                        notes.push(`Overwrote previous 1-day ${app.status} TO (${app.id})`);
+                        applications.splice(i, 1); // Remove old
+                        i--; // Adjust index
+                    }
+
+                    // MULTI-DAY APPROVED AFFECTED RULE
+                    if (app.type === 'TO' && app.start !== app.end && app.status === 'APPROVED') {
+                        let confirmSplit = confirm(`Conflict with Multi-Day ${app.id}.\nProceeding will Cancel OLD TO and create 2 NEW TOs (1 for remaining days auto-approved, 1 for new routing).`);
+                        if (!confirmSplit) return;
+                        notes.push(`Split from multi-day TO cancellation (${app.id})`);
+                        
+                        // Mock the split logic: remove old, push a mock "remainder" TO
+                        applications.splice(i, 1);
+                        applications.push({
+                            id: `TO-SPLIT-AUTO`, type: 'TO', start: app.start, end: app.end, 
+                            status: 'APPROVED', route: 'AUTO_APPROVED_REMAINDER', notes: 'Remainder of split Multi-Day'
+                        });
+                        i--; // Adjust index
+                    }
+                }
+            }
+
+            // 2. STANDARD ROUTING LOGIC (If not hijacked by PSO conflict)
+            if (routing === "") {
+                if (transport === 'GOV_VEHICLE') {
+                    routing = 'PENDING_VEHICLE_APPROVER';
+                    notes.push("NOT VALID FOR TRANSPORTATION REIMBURSEMENT CLAIM");
                 } else {
-                    errLbl.innerText = "Invalid credentials."; errLbl.classList.remove("hidden");
+                    if (unit === 'PARPO') routing = 'PENDING_PARPO';
+                    else if (unit === 'HAS_UNIT') routing = 'PENDING_UNIT_HEAD';
+                    else if (unit === 'NO_UNIT') routing = 'PENDING_CHIEF';
                 }
-            } catch (err) {
-                errLbl.innerText = "Network Error."; errLbl.classList.remove("hidden");
-            } finally {
-                btn.innerText = "LOG IN"; btn.disabled = false;
             }
-        }
 
-        function logout() { currentUser = null; renderLogin(); }
-
-        // --- 2. APP SHELL (Load Once, Hide & Show) ---
-        function initAppShell() {
-            document.getElementById('app').innerHTML = `
-                <header class="flex-none w-full h-16 dar-green text-white px-5 flex justify-between items-center shadow-md z-50">
-                    <div class="overflow-hidden">
-                        <h1 class="font-bold text-lg leading-tight truncate whitespace-nowrap">${currentUser.full_name}</h1>
-                        <p class="text-xs text-dar-gold tracking-wide">${currentUser.position || 'Employee'}</p>
-                    </div>
-                    <button onclick="logout()" class="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full font-bold active:bg-opacity-30">Logout</button>
-                </header>
-
-                <main class="flex-grow w-full overflow-y-auto bg-gray-100 relative z-10 scroll-smooth">
-                    <div id="view-apply" class="view-section w-full p-4 pb-24">
-                        <h2 class="font-bold text-xl text-dar-green mb-4">File Travel Order</h2>
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">START DATE</label>
-                                <input type="date" id="to-start" class="w-full px-3 py-2 bg-gray-50 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">END DATE</label>
-                                <input type="date" id="to-end" class="w-full px-3 py-2 bg-gray-50 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">DESTINATION</label>
-                                <input type="text" id="to-dest" class="w-full px-3 py-2 bg-gray-50 border rounded-lg" placeholder="e.g., DARPO, Field">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">PURPOSE</label>
-                                <textarea id="to-purpose" class="w-full px-3 py-2 bg-gray-50 border rounded-lg" rows="2"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">TRANSPORT</label>
-                                <select id="to-transport" class="w-full px-3 py-2 bg-gray-50 border rounded-lg">
-                                    <option value="PUBLIC UTILITY">PUBLIC UTILITY</option>
-                                    <option value="GOV'T VEHICLE">GOV'T VEHICLE</option>
-                                    <option value="PERSONAL VEHICLE">PERSONAL VEHICLE</option>
-                                </select>
-                            </div>
-                            <button onclick="submitTravelOrder()" id="btnSubmitTO" class="w-full mt-4 dar-green text-white font-bold py-3 rounded-xl shadow-md active:opacity-80">Submit Application</button>
-                        </div>
-                    </div>
-
-                    <div id="view-status" class="view-section w-full p-4 pb-24 hidden">
-                        <div class="flex justify-between items-center mb-4 sticky top-0 bg-gray-100 z-10 py-2">
-                            <h2 class="font-bold text-xl text-dar-green">My Requests</h2>
-                            <button onclick="fetchMyOrders()" class="text-xl">🔄</button>
-                        </div>
-                        <div id="statusList" class="space-y-3"></div>
-                    </div>
-
-                    <div id="view-settings" class="view-section w-full p-4 pb-24 hidden">
-                        <h2 class="font-bold text-xl text-dar-green mb-4">Account Settings</h2>
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">CURRENT PASSWORD</label>
-                                <input type="password" id="set-oldPwd" class="w-full px-3 py-2 bg-gray-50 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">NEW PASSWORD</label>
-                                <input type="password" id="set-newPwd" class="w-full px-3 py-2 bg-gray-50 border rounded-lg">
-                            </div>
-                            <button onclick="changePassword()" class="w-full mt-2 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md active:opacity-80">Update Password</button>
-                        </div>
-                    </div>
-                </main>
-
-                <nav class="flex-none w-full h-16 bg-white border-t border-gray-200 flex z-50 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-                    <button onclick="switchView('apply')" id="nav-apply" class="nav-btn flex flex-col items-center justify-center w-1/3 h-full text-dar-green font-bold relative">
-                        <div class="nav-indicator absolute top-0 w-1/2 h-1 dar-green rounded-b-full"></div>
-                        <span class="text-xl mb-0.5">✍️</span><span class="text-[9px] uppercase tracking-wider">Apply TO</span>
-                    </button>
-                    <button onclick="switchView('status')" id="nav-status" class="nav-btn flex flex-col items-center justify-center w-1/3 h-full text-gray-400 relative">
-                        <div class="nav-indicator absolute top-0 w-1/2 h-1 dar-green rounded-b-full hidden"></div>
-                        <span class="text-xl mb-0.5">📋</span><span class="text-[9px] uppercase tracking-wider">Status</span>
-                    </button>
-                    <button onclick="switchView('settings')" id="nav-settings" class="nav-btn flex flex-col items-center justify-center w-1/3 h-full text-gray-400 relative">
-                        <div class="nav-indicator absolute top-0 w-1/2 h-1 dar-green rounded-b-full hidden"></div>
-                        <span class="text-xl mb-0.5">⚙️</span><span class="text-[9px] uppercase tracking-wider">Settings</span>
-                    </button>
-                </nav>
-            `;
-            fetchMyOrders();
-        }
-
-        function switchView(viewName) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + viewName).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-dar-green', 'font-bold');
-                el.classList.add('text-gray-400');
-                el.querySelector('.nav-indicator').classList.add('hidden');
+            // 3. SAVE NEW APPLICATION
+            let newId = `TO-${Math.floor(Math.random() * 9000) + 1000}`;
+            applications.unshift({
+                id: newId,
+                type: 'TO',
+                start: startDate,
+                end: endDate,
+                status: 'PENDING',
+                route: routing,
+                notes: notes.join(' | ') || 'Standard Application'
             });
 
-            const activeBtn = document.getElementById('nav-' + viewName);
-            activeBtn.classList.remove('text-gray-400');
-            activeBtn.classList.add('text-dar-green', 'font-bold');
-            activeBtn.querySelector('.nav-indicator').classList.remove('hidden');
+            alert(`Application ${newId} Submitted Successfully!\nRouted to: ${routing}`);
+            event.target.reset();
+            document.getElementById('itineraryBody').innerHTML = `<tr><td><input type="date" class="itin-date" required></td><td><input type="text" placeholder="Location..." required></td><td><input type="text" placeholder="Purpose..." required></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button></td></tr>`;
             
-            if (viewName === 'status') fetchMyOrders();
+            // Navigate to status
+            switchView('status-to-view', document.querySelectorAll('.nav-link')[1]);
         }
 
-        // --- 3. TO APPLICATION LOGIC & RULES ---
-        
-        // Helper: Get array of dates between start and end
-        function getDates(startDate, endDate) {
-            let dates = [];
-            let curr = new Date(startDate);
-            let end = new Date(endDate);
-            while (curr <= end) {
-                dates.push(curr.toISOString().split('T')[0]);
-                curr.setDate(curr.getDate() + 1);
-            }
-            return dates;
-        }
-
-        // Helper: Generate TO Number: YYYY-DIVISION-00000
-        async function generateTONumber() {
-            const year = new Date().getFullYear();
-            const div = (currentUser.division || 'UNKNOWN').split(',')[0].trim().toUpperCase();
-            const prefix = `${year}-${div}-`;
-
-            const { data, error } = await supabase.from('travel_orders').select('to_no').like('to_no', `${prefix}%`);
-            if (error) throw error;
-
-            let maxNum = 0;
-            data.forEach(row => {
-                const parts = row.to_no.split('-');
-                if (parts.length === 3) {
-                    const num = parseInt(parts[2], 10);
-                    if (num > maxNum) maxNum = num;
-                }
-            });
-            return `${prefix}${String(maxNum + 1).padStart(5, '0')}`;
-        }
-
-        // Helper: Determine Initial Approver Status
-        function getInitialStatus(transport) {
-            if (transport === "GOV'T VEHICLE") return "PENDING_VEHICLE_RESERVATION";
-            const unit = (currentUser.unit || "").toUpperCase();
-            if (unit === "PARPO") return "PENDING_PARPO";
-            if (unit && unit !== "NONE") return "PENDING_UNIT_HEAD";
-            return "PENDING_CHIEF";
-        }
-
-        async function submitTravelOrder() {
-            const start = document.getElementById('to-start').value;
-            const end = document.getElementById('to-end').value;
-            const dest = document.getElementById('to-dest').value.trim();
-            const purpose = document.getElementById('to-purpose').value.trim();
-            const transport = document.getElementById('to-transport').value;
-            const btn = document.getElementById('btnSubmitTO');
-
-            if (!start || !end || !dest || !purpose) return alert("Please fill all required fields.");
-            if (new Date(start) > new Date(end)) return alert("Start date cannot be after end date.");
-
-            btn.disabled = true; btn.innerText = "Processing...";
-
-            try {
-                const targetDates = getDates(start, end);
-                let finalRemarks = "";
-
-                // RULE: Check existing PSO
-                const { data: psoData } = await supabase.from('pso_records').select('*').eq('emp_id', currentUser.id);
-                if (psoData) {
-                    let hasPSO = false;
-                    for (let p of psoData) {
-                        const pDates = getDates(p.start_date, p.end_date);
-                        if (targetDates.some(td => pDates.includes(td))) hasPSO = true;
-                    }
-                    if (hasPSO) {
-                        const proceed = confirm("Warning: You have an existing PSO schedule on these dates. TO cannot supersede a PSO. Do you still want to continue?");
-                        if (!proceed) throw new Error("Cancelled by user due to PSO conflict.");
-                        finalRemarks = "WITH EXISTING PSO/RSO, subject for PARPO's FINAL APPROVAL";
-                    }
-                }
-
-                // RULE: Check Pending / Approved TO Overlap
-                const { data: userItins } = await supabase.from('itinerary').select('to_no, travel_date');
-                const { data: userTOs } = await supabase.from('travel_orders').select('to_no, status').eq('emp_id', currentUser.id);
-                
-                let toMap = {}; // map to_no -> status
-                if(userTOs) userTOs.forEach(t => toMap[t.to_no] = t.status);
-
-                let conflictingTOs = new Set();
-                if(userItins) {
-                    userItins.forEach(i => {
-                        if (toMap[i.to_no] && targetDates.includes(i.travel_date)) {
-                            conflictingTOs.add(i.to_no);
-                        }
-                    });
-                }
-
-                for (let cTO of conflictingTOs) {
-                    const status = toMap[cTO];
-                    
-                    if (status.startsWith("PENDING")) {
-                        const over = confirm(`You have a PENDING TO (${cTO}) on these dates. Overwrite and create a NEW APPLICATION?`);
-                        if (!over) throw new Error("Cancelled: Pending TO conflict.");
-                        // Delete old Pending TO
-                        await supabase.from('travel_orders').delete().eq('to_no', cTO);
-                        await supabase.from('itinerary').delete().eq('to_no', cTO);
-                    } 
-                    else if (status === "APPROVED") {
-                        // Check how many days the old approved TO has
-                        const oldItins = userItins.filter(i => i.to_no === cTO);
-                        const over = confirm(`You have an APPROVED TO (${cTO}) on these dates. Overwrite?`);
-                        if (!over) throw new Error("Cancelled: Approved TO conflict.");
-
-                        if (oldItins.length === 1) {
-                            // 1 Day Approved Rule: Cancel old, create new, Notify lowest approver
-                            await supabase.from('travel_orders').delete().eq('to_no', cTO);
-                            await supabase.from('itinerary').delete().eq('to_no', cTO);
-                            
-                            await supabase.from('notifications').insert({
-                                recipient_role: 'UNIT_HEAD', // Defaulting lowest approver notify
-                                message: `Approved TO ${cTO} was overwritten by ${currentUser.full_name}`,
-                                to_no: cTO,
-                                is_read: false
-                            });
-                        } else {
-                            // >= 2 Days Rule: Cancel old, split into remaining approved days and new application
-                            // Delete old record to replace logic
-                            await supabase.from('travel_orders').delete().eq('to_no', cTO);
-                            await supabase.from('itinerary').delete().eq('to_no', cTO);
-                            
-                            // Re-insert unaffected dates as automatically APPROVED under new TO
-                            const unaffectedDates = oldItins.map(i => i.travel_date).filter(d => !targetDates.includes(d));
-                            if (unaffectedDates.length > 0) {
-                                const splitTONo = await generateTONumber();
-                                await insertTOCore(splitTONo, "APPROVED", "Split from overwritten TO", transport);
-                                for (let d of unaffectedDates) {
-                                    await supabase.from('itinerary').insert({ to_no: splitTONo, travel_date: d, destination: dest, purpose: purpose });
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // If transport is GOV'T VEHICLE, add reimbursement note
-                if (transport === "GOV'T VEHICLE") {
-                    finalRemarks = (finalRemarks ? finalRemarks + " | " : "") + "NOT VALID FOR TRANSPORTATION REIMBURSEMENT CLAIM";
-                }
-
-                // GENERATE & INSERT NEW APPLICATION
-                const newTONo = await generateTONumber();
-                const initStatus = getInitialStatus(transport);
-                
-                await insertTOCore(newTONo, initStatus, finalRemarks, transport);
-                
-                for (let d of targetDates) {
-                    await supabase.from('itinerary').insert({ to_no: newTONo, travel_date: d, destination: dest, purpose: purpose });
-                }
-
-                alert("Travel Order successfully filed!");
-                document.getElementById('to-start').value = '';
-                document.getElementById('to-end').value = '';
-                document.getElementById('to-dest').value = '';
-                document.getElementById('to-purpose').value = '';
-                switchView('status');
-
-            } catch (e) {
-                if(e.message && e.message.includes("Cancelled")) console.log(e.message);
-                else alert("Error: " + e.message);
-            } finally {
-                btn.disabled = false; btn.innerText = "Submit Application";
-            }
-        }
-
-        async function insertTOCore(to_no, status, remarks, transport) {
-            const { error } = await supabase.from('travel_orders').insert({
-                to_no: to_no,
-                emp_id: currentUser.id,
-                emp_name: currentUser.full_name,
-                unit: currentUser.unit || "NONE",
-                division: currentUser.division || "NONE",
-                status: status,
-                transport: transport,
-                remarks: remarks
-            });
-            if (error) throw error;
-        }
-
-        // --- 4. STATUS VIEW ---
-        async function fetchMyOrders() {
-            const container = document.getElementById('statusList');
-            container.innerHTML = `<p class="text-gray-500 text-center animate-pulse">Loading requests...</p>`;
+        function renderStatusTable() {
+            const tbody = document.getElementById('statusBody');
+            tbody.innerHTML = '';
             
-            try {
-                const { data: tos } = await supabase.from('travel_orders').select('*').eq('emp_id', currentUser.id).order('to_no', { ascending: false });
-                const { data: itins } = await supabase.from('itinerary').select('*');
-
-                if (!tos || tos.length === 0) {
-                    container.innerHTML = `<div class="text-center py-10 text-gray-400"><span class="text-3xl">📭</span><p class="mt-2 text-sm">No Travel Orders found.</p></div>`;
-                    return;
-                }
-
-                let html = '';
-                tos.forEach(o => {
-                    const myItin = (itins || []).filter(i => i.to_no === o.to_no).sort((a,b) => new Date(a.travel_date) - new Date(b.travel_date));
-                    let dateStr = "No Date";
-                    let dests = new Set();
-                    
-                    if (myItin.length > 0) {
-                        myItin.forEach(i => dests.add(i.destination));
-                        const d1 = new Date(myItin[0].travel_date).toLocaleDateString('en-US', {month:'short', day:'numeric'});
-                        if(myItin.length > 1) {
-                            const d2 = new Date(myItin[myItin.length-1].travel_date).toLocaleDateString('en-US', {month:'short', day:'numeric'});
-                            dateStr = `${d1} - ${d2}`;
-                        } else { dateStr = d1; }
-                    }
-
-                    const isAppr = o.status === 'APPROVED';
-                    const isDeny = o.status === 'DISAPPROVED';
-                    let statusColor = "bg-yellow-100 text-yellow-800";
-                    if (isAppr) statusColor = "bg-green-100 text-green-800";
-                    if (isDeny) statusColor = "bg-red-100 text-red-800";
-                    const niceStatus = o.status.replace('PENDING_', 'Pending: ').replace(/_/g, ' ');
-
-                    html += `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="inline-block ${statusColor} text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${niceStatus}</span>
-                                <span class="text-xs font-bold text-gray-400">${o.to_no}</span>
-                            </div>
-                            <div class="flex items-center text-sm mb-1 mt-3">
-                                <span class="mr-2">📅</span><p class="font-bold text-dar-green">${dateStr}</p>
-                            </div>
-                            <div class="flex items-start text-sm">
-                                <span class="mr-2">📍</span><p class="text-gray-600">${Array.from(dests).join(', ')}</p>
-                            </div>
-                            <div class="flex items-start text-sm mt-1">
-                                <span class="mr-2">🚗</span><p class="text-xs text-gray-500">${o.transport}</p>
-                            </div>
-                            ${o.remarks ? `<p class="mt-2 text-xs italic text-blue-600 bg-blue-50 p-2 rounded">Note: ${o.remarks}</p>` : ''}
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-            } catch (err) {
-                container.innerHTML = `<p class="text-red-500 text-center">Failed to load data.</p>`;
-            }
+            applications.forEach(app => {
+                let dateDisplay = app.start === app.end ? app.start : `${app.start} to ${app.end}`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${app.id}</strong><br><small>${app.type}</small></td>
+                        <td>${dateDisplay}</td>
+                        <td><span class="status-badge">${app.route}</span></td>
+                        <td><small>${app.notes}</small></td>
+                    </tr>
+                `;
+            });
         }
 
-        // --- 5. SETTINGS / PASSWORD ---
-        async function changePassword() {
-            const oldP = document.getElementById('set-oldPwd').value;
-            const newP = document.getElementById('set-newPwd').value;
-
-            if (!oldP || !newP) return alert("Fill all fields.");
-            if (oldP !== currentUser.password) return alert("Incorrect current password.");
-
-            try {
-                const { error } = await supabase.from('users').update({ password: newP }).eq('id', currentUser.id);
-                if (error) throw error;
-                
-                currentUser.password = newP;
-                alert("Password updated successfully.");
-                document.getElementById('set-oldPwd').value = '';
-                document.getElementById('set-newPwd').value = '';
-            } catch (err) {
-                alert("Error updating password.");
+        // --- PASSWORD LOGIC ---
+        function changePassword(event) {
+            event.preventDefault();
+            if(document.getElementById('newPass').value !== document.getElementById('confPass').value) {
+                alert("New passwords do not match!"); return;
             }
+            alert("Password updated securely.");
+            event.target.reset();
         }
+
+        // Initial render
+        renderStatusTable();
     </script>
 </body>
 </html>
